@@ -1,0 +1,21 @@
+# Ambientes e Cache
+.venv/
+__pycache__/
+*.pyc
+
+# Configurações Sensíveis
+.env
+
+# Logs e Dados de Execução
+orion.log
+memory/*.jsonl
+memory/*.json
+
+# Documentação
+*.md
+!README.md
+
+# Ferramentas de IDE
+.DS_Store
+.idea/
+.vscode/
