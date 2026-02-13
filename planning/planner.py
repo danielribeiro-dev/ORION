@@ -30,8 +30,10 @@ class Planner(BasePlanner):
         user_input = intent.get("user_input", "") # Router must pass this!
         
         # Simple Mapping Strategy (Phase 3)
+        context = intent.get("metadata", {}).get("context", [])
+        
         if intent_type in ("CHAT", "HELP"):
-            return [("chat", {"user_input": user_input})]
+            return [("chat", {"user_input": user_input, "context": context})]
             
         if intent_type == "WEB":
             return [("web", {"user_input": user_input})]
@@ -40,7 +42,7 @@ class Planner(BasePlanner):
              return [("fs", {"user_input": user_input})]
              
         if intent_type == "MEMORY":
-            # For now, memory is handled by ChatPlugin implicitly or history log
-            return [("chat", {"user_input": user_input})]
+            # Pass context to chat for memory-related queries
+            return [("chat", {"user_input": user_input, "context": context})]
 
         return []

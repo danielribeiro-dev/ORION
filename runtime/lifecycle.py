@@ -29,3 +29,14 @@ class Runtime:
         Inicia o sistema, validando ambiente e carregando configurações.
         """
         self.logger.info(f"Starting ORION Runtime [Env: {self.settings.env.value}]")
+
+    def shutdown(self) -> None:
+        """
+        Desliga o sistema de forma graciosa.
+        Libera recursos e finaliza conexões.
+        """
+        self.logger.info("[Runtime] Shutting down...")
+        # TODO: Fechar conexões abertas
+        # TODO: Liberar recursos
+        # TODO: Finalizar plugins
+        self.logger.info("[Runtime] Shutdown complete.")

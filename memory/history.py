@@ -53,3 +53,31 @@ class HistoryMemory(BaseMemory):
         }
         self.session_buffer.append(entry)
         self.save() # Auto-flush for safety
+
+    def get_recent(self, n: int = 5) -> List[Dict[str, Any]]:
+        """
+        Retorna as últimas N interações.
+        
+        Lê do buffer de sessão primeiro, depois do arquivo se necessário.
+        """
+        # Primeiro, pegar do buffer de sessão
+        recent = list(self.session_buffer[-n:])
+        
+        # Se precisar de mais, ler do arquivo
+        if len(recent) < n and os.path.exists(self.filepath):
+            try:
+                with open(self.filepath, 'r') as f:
+                    lines = f.readlines()
+                    # Pegar últimas linhas do arquivo
+                    needed = n - len(recent)
+                    file_entries = []
+                    for line in lines[-needed:]:
+                        try:
+                            file_entries.append(json.loads(line.strip()))
+                        except json.JSONDecodeError:
+                            continue
+                    recent = file_entries + recent
+            except Exception as e:
+                logger.warning(f"[HistoryMemory] Failed to read recent history: {e}")
+        
+        return recent[-n:]  # Garantir que não retorna mais que N

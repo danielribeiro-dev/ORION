@@ -9,6 +9,7 @@ from llm.base import BaseLLMAdapter
 from llm.adapters.groq_adapter import GroqAdapter
 from llm.adapters.ollama_adapter import OllamaAdapter
 from infra.logger import logger
+from infra.contracts import LLMResult
 
 class LLMService(BaseLLMAdapter):
     """
@@ -19,16 +20,26 @@ class LLMService(BaseLLMAdapter):
         self.primary = GroqAdapter()
         self.secondary = OllamaAdapter()
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str) -> LLMResult:
         """
         Tenta gerar com o primário. Se falhar, tenta o secundário.
+        
+        Returns:
+            LLMResult estruturado com informação de provedor e status degraded.
         """
         try:
-            return self.primary.generate(prompt)
-        except Exception:
+            result = self.primary.generate(prompt)
+            logger.info(f"[LLMService] Using primary provider: {result.provider}")
+            return result
+        except Exception as primary_error:
+            logger.warning(f"[LLMService] Primary provider failed: {primary_error}")
             logger.info("[LLMService] Switching to fallback (Ollama)...")
             try:
-                return self.secondary.generate(prompt)
-            except Exception as e:
+                result = self.secondary.generate(prompt)
+                logger.warning(f"[LLMService] Using fallback provider: {result.provider} (degraded mode)")
+                return result
+            except Exception as secondary_error:
                 logger.critical("[LLMService] All providers failed.")
-                raise e
+                logger.error(f"Primary error: {primary_error}")
+                logger.error(f"Secondary error: {secondary_error}")
+                raise secondary_error

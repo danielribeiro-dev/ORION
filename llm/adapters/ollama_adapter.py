@@ -8,6 +8,7 @@ import requests
 from llm.base import BaseLLMAdapter
 from infra.config import settings
 from infra.logger import logger
+from infra.contracts import LLMResult
 
 class OllamaAdapter(BaseLLMAdapter):
     """Adaptador para Ollama (Local)."""
@@ -17,9 +18,13 @@ class OllamaAdapter(BaseLLMAdapter):
         self.model = settings.ollama_model
         self.api_url = f"{self.base_url}/api/generate"
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str) -> LLMResult:
         """
         Gera completion usando Ollama local.
+        
+        Returns:
+            LLMResult com texto, provedor, status degraded e modelo usado.
+            degraded=True pois Ollama é o fallback secundário.
         """
         data = {
             "model": self.model,
@@ -32,7 +37,14 @@ class OllamaAdapter(BaseLLMAdapter):
             response.raise_for_status()
             
             result = response.json()
-            return result["response"]
+            text = result["response"]
+            
+            return LLMResult(
+                text=text,
+                provider="ollama",
+                degraded=True,  # Fallback, modo degradado
+                model=self.model
+            )
             
         except Exception as e:
             logger.error(f"[OllamaAdapter] Failed: {e}")

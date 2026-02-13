@@ -14,6 +14,18 @@ Regras:
 import os
 from enum import Enum
 from typing import Optional
+from pathlib import Path
+
+# Carregar variáveis do .env
+try:
+    from dotenv import load_dotenv
+    # Procurar .env no diretório raiz do projeto
+    env_path = Path(__file__).parent.parent / ".env"
+    load_dotenv(dotenv_path=env_path)
+except ImportError:
+    # Se python-dotenv não estiver instalado, continuar sem ele
+    # (variáveis de ambiente do sistema ainda funcionarão)
+    pass
 
 class Environment(Enum):
     DEVELOPMENT = "development"

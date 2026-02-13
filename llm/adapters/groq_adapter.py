@@ -10,6 +10,7 @@ from typing import Optional
 from llm.base import BaseLLMAdapter
 from infra.config import settings
 from infra.logger import logger
+from infra.contracts import LLMResult
 
 class GroqAdapter(BaseLLMAdapter):
     """Adaptador para a API Groq."""
@@ -19,10 +20,13 @@ class GroqAdapter(BaseLLMAdapter):
         self.model = settings.groq_model
         self.api_url = "https://api.groq.com/openai/v1/chat/completions"
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str) -> LLMResult:
         """
         Gera completion usando Groq API.
         Lança exceção em caso de erro para permitir fallback.
+        
+        Returns:
+            LLMResult com texto, provedor, status degraded e modelo usado.
         """
         if not self.api_key:
             raise ValueError("GROQ_API_KEY not configured.")
@@ -43,7 +47,14 @@ class GroqAdapter(BaseLLMAdapter):
             response.raise_for_status()
             
             result = response.json()
-            return result["choices"][0]["message"]["content"]
+            text = result["choices"][0]["message"]["content"]
+            
+            return LLMResult(
+                text=text,
+                provider="groq",
+                degraded=False,  # Primário, não degradado
+                model=self.model
+            )
             
         except Exception as e:
             logger.warning(f"[GroqAdapter] Failed: {e}")
