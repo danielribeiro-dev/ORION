@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 sys.path.append(os.getcwd())
 
 from main import main
-from infra.ui import ConsoleUI
+from core.ui import ConsoleUI
 
 def test_loop():
     print("Testing Main Loop...")

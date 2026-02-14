@@ -12,14 +12,14 @@ Regras:
 
 from typing import Optional
 
-from infra.config import settings, Settings
-from infra.logger import logger
-from runtime.lifecycle import Runtime
-from routing.router import Router
-from planning.planner import Planner
-from execution.executor import Executor
-from answer.answer_pipeline import AnswerPipeline
-from policies.capability_guard import CapabilityGuard
+from core.config import settings, Settings
+from core.logger import logger
+from core.runtime import Runtime
+from pipeline.router import Router
+from pipeline.planner import Planner
+from pipeline.executor import Executor
+from pipeline.answer import AnswerPipeline
+from pipeline.policy import CapabilityGuard
 from llm.service import LLMService
 from memory.profile import ProfileMemory
 from memory.history import HistoryMemory
@@ -50,11 +50,13 @@ class Container:
         from plugins.chat_plugin import ChatPlugin
         from plugins.web_plugin import WebPlugin
         from plugins.fs_plugin import FilesystemPlugin
+        from plugins.memory_plugin import MemoryPlugin
         
         self.plugins = {
             "chat": ChatPlugin(),
             "web": WebPlugin(),
-            "fs": FilesystemPlugin()
+            "fs": FilesystemPlugin(),
+            "memory": MemoryPlugin()
         }
         
         # Pipeline Components

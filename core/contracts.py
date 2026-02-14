@@ -88,24 +88,41 @@ class ConfidenceScore:
     Agrega múltiplas fontes de confiança para calcular score final.
     """
     router_confidence: float  # 0.0 - 1.0
-    plugin_confidence: float = 1.0  # 0.0 - 1.0 (default 1.0 se não aplicável)
-    llm_confidence: float = 1.0  # 0.0 - 1.0 (opcional)
+    plugin_confidence: float = 1.0  # 0.0 - 1.0
+    llm_confidence: float = 1.0  # 0.0 - 1.0
+    
+    # Metadados adicionais para refinamento (v0.2.2)
+    source_count: int = 0
+    is_degraded: bool = False
     
     @property
     def final_confidence(self) -> float:
         """
-        Calcula confiança final como média ponderada.
+        Calcula confiança final com pesos e penalidades.
         
         Pesos:
-        - Router: 30% (decisão de caminho)
-        - Plugin: 50% (qualidade dos dados)
-        - LLM: 20% (qualidade da síntese)
+        - Router: 30%
+        - Plugin: 50%
+        - LLM: 20%
+        
+        Penalidades (v0.2.2):
+        - Modo degradado: -0.2
+        - Poucas fontes (< 2): -0.1
         """
-        return (
+        base_score = (
             self.router_confidence * 0.3 +
             self.plugin_confidence * 0.5 +
             self.llm_confidence * 0.2
         )
+        
+        # Aplicar penalidades
+        if self.is_degraded:
+            base_score -= 0.2
+            
+        if self.source_count < 2 and self.plugin_confidence > 0:
+            base_score -= 0.1
+            
+        return max(0.0, min(1.0, base_score))
     
     def __post_init__(self):
         """Valida os dados após inicialização."""

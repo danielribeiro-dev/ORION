@@ -14,8 +14,8 @@ Proibições:
 
 from typing import Any, Dict, List
 from plugins.base_plugin import BasePlugin
-from infra.logger import logger
-from infra.contracts import PluginResult
+from core.logger import logger
+from core.contracts import PluginResult
 import hashlib
 import time
 from datetime import datetime, timedelta

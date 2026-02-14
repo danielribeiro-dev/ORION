@@ -11,7 +11,7 @@ Regras:
 
 import logging
 import sys
-from infra.config import settings
+from core.config import settings
 
 def setup_logger(name: str) -> logging.Logger:
     """
@@ -23,8 +23,14 @@ def setup_logger(name: str) -> logging.Logger:
     logger.setLevel(logging.DEBUG) # Lowest level for capture
     
     if not logger.handlers:
-        # 1. File Handler (Detailed)
-        file_handler = logging.FileHandler("orion.log")
+        # 1. Rotating File Handler (Detailed) - v0.2.2
+        from logging.handlers import RotatingFileHandler
+        
+        file_handler = RotatingFileHandler(
+            "orion.log", 
+            maxBytes=5 * 1024 * 1024,  # 5MB
+            backupCount=3
+        )
         file_handler.setLevel(logging.DEBUG)
         file_formatter = logging.Formatter(
             '%(asctime)s [%(levelname)s] [%(name)s] %(message)s',

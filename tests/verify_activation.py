@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 # Add project root to path
 sys.path.append(os.getcwd())
 
-from infra.container import Container
+from core.container import Container
 
 def test_activation():
     print("Testing System Activation...")

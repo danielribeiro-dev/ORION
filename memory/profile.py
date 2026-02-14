@@ -8,7 +8,7 @@ import json
 import os
 from typing import Dict, Any
 from memory.base import BaseMemory
-from infra.logger import logger
+from core.logger import logger
 
 class ProfileMemory(BaseMemory):
     """
@@ -53,3 +53,15 @@ class ProfileMemory(BaseMemory):
 
     def get_user_name(self) -> str:
         return self.data.get("user_name", "User")
+
+    def set_system_name(self, name: str) -> None:
+        """Altera o nome do sistema e persiste."""
+        self.data["system_name"] = name
+        self.save()
+        logger.info(f"[ProfileMemory] System name changed to: {name}")
+
+    def set_user_name(self, name: str) -> None:
+        """Altera o nome do usuário e persiste."""
+        self.data["user_name"] = name
+        self.save()
+        logger.info(f"[ProfileMemory] User name changed to: {name}")

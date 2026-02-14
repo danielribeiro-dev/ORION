@@ -11,7 +11,7 @@ Proibições:
     - Não altera a ação (apenas aprova ou reprova).
 """
 
-from policies.base import BasePolicy
+from core.interfaces import BasePolicy
 
 class CapabilityGuard(BasePolicy):
     """

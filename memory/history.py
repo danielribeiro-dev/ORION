@@ -9,7 +9,7 @@ import os
 import time
 from typing import List, Dict, Any
 from memory.base import BaseMemory
-from infra.logger import logger
+from core.logger import logger
 
 class HistoryMemory(BaseMemory):
     """

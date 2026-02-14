@@ -18,8 +18,8 @@ class Runtime:
 
     def __init__(self) -> None:
         """Inicializa o Runtime."""
-        from infra.config import settings
-        from infra.logger import logger
+        from core.config import settings
+        from core.logger import logger
         self.settings = settings
         self.logger = logger
         self.logger.info("Runtime initialized.")

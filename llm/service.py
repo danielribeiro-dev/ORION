@@ -8,8 +8,8 @@ e fallback para o secundário (Ollama).
 from llm.base import BaseLLMAdapter
 from llm.adapters.groq_adapter import GroqAdapter
 from llm.adapters.ollama_adapter import OllamaAdapter
-from infra.logger import logger
-from infra.contracts import LLMResult
+from core.logger import logger
+from core.contracts import LLMResult
 
 class LLMService(BaseLLMAdapter):
     """

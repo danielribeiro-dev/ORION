@@ -8,12 +8,14 @@ Responsabilidade:
 
 from typing import Any, Dict
 from plugins.base_plugin import BasePlugin
-from infra.container import Container
+from core.container import Container
+from core.contracts import PluginResult
+from core.logger import logger
 
 class ChatPlugin(BasePlugin):
     """Plugin de Chat Conversacional."""
 
-    def execute(self, params: Dict[str, Any]) -> str:
+    def execute(self, params: Dict[str, Any]) -> PluginResult:
         """
         Gera resposta baseada no input e contexto.
         """
@@ -43,6 +45,26 @@ class ChatPlugin(BasePlugin):
         
         try:
             llm_result = container.llm_service.generate(full_prompt)
-            return llm_result.text  # Extrair texto do resultado estruturado
+            
+            # Encapsular em PluginResult (v0.2.2 enforcement)
+            return PluginResult(
+                data=[{"text": llm_result.text}],
+                sources=[],
+                confidence=1.0,
+                degraded=llm_result.degraded,
+                plugin="chat",
+                metadata={
+                    "llm_model": llm_result.model,
+                    "llm_provider": llm_result.provider,
+                    "llm_degraded": llm_result.degraded
+                }
+            )
         except Exception as e:
-            return f"I apologize, but I encountered an error generating a response: {e}"
+            logger.error(f"[ChatPlugin] Error: {e}")
+            return PluginResult(
+                data=[{"error": str(e)}],
+                sources=[],
+                confidence=0.0,
+                degraded=True,
+                plugin="chat"
+            )

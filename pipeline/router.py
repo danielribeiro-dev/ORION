@@ -15,10 +15,10 @@ Proibições:
 import json
 import re
 from typing import Any, Dict, List, Optional
-from routing.base import BaseRouter
-from routing.prompts import INTENT_CLASSIFICATION_SYSTEM_PROMPT
-from routing.keywords import classify_by_keywords, get_best_intent
-from infra.logger import logger
+from core.interfaces import BaseRouter
+from pipeline.prompts import INTENT_CLASSIFICATION_SYSTEM_PROMPT
+from pipeline.keywords import classify_by_keywords, get_best_intent
+from core.logger import logger
 
 class Router(BaseRouter):
     """
@@ -38,7 +38,7 @@ class Router(BaseRouter):
             input_data: Input do usuário
             context: Histórico recente de interações (opcional)
         """
-        from infra.container import Container
+        from core.container import Container
         container = Container.get_instance()
         llm = container.llm_service
         

@@ -6,9 +6,9 @@ Implementação do contrato BaseLLMAdapter para Ollama local.
 
 import requests
 from llm.base import BaseLLMAdapter
-from infra.config import settings
-from infra.logger import logger
-from infra.contracts import LLMResult
+from core.config import settings
+from core.logger import logger
+from core.contracts import LLMResult
 
 class OllamaAdapter(BaseLLMAdapter):
     """Adaptador para Ollama (Local)."""

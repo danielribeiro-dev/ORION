@@ -13,8 +13,8 @@ Regras:
 """
 
 import sys
-from infra.container import Container
-from infra.ui import ConsoleUI
+from core.container import Container
+from core.ui import ConsoleUI
 
 def main() -> None:
     # 1. Initialize Container

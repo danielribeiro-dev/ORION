@@ -8,9 +8,9 @@ import os
 import requests
 from typing import Optional
 from llm.base import BaseLLMAdapter
-from infra.config import settings
-from infra.logger import logger
-from infra.contracts import LLMResult
+from core.config import settings
+from core.logger import logger
+from core.contracts import LLMResult
 
 class GroqAdapter(BaseLLMAdapter):
     """Adaptador para a API Groq."""

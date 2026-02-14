@@ -9,32 +9,44 @@ Responsabilidade:
 import os
 from typing import Any, Dict
 from plugins.base_plugin import BasePlugin
-from infra.logger import logger
+from core.logger import logger
+from core.contracts import PluginResult
 
 class FilesystemPlugin(BasePlugin):
     """Plugin de Sistema de Arquivos (Leitura)."""
 
-    def execute(self, params: Dict[str, Any]) -> str:
+    def execute(self, params: Dict[str, Any]) -> PluginResult:
         """
         Executa operações de arquivo.
-        Params:
-            - operation: list_dir | read_file
-            - path: caminho alvo
+        Returns:
+            PluginResult com dados estruturados.
         """
-        # Default behavior: if no specific op, list current dir or summarize
-        # For this phase, we map user input to list_dir of cwd
-        
         cwd = os.getcwd()
         try:
             items = os.listdir(cwd)
             files = [f for f in items if os.path.isfile(f)]
             dirs = [d for d in items if os.path.isdir(d)]
             
-            output = f"Current Directory ({cwd}):\n"
-            output += "Directories:\n" + "\n".join([f"  [DIR] {d}" for d in dirs]) + "\n"
-            output += "Files:\n" + "\n".join([f"  {f}" for f in files])
+            data = {
+                "cwd": cwd,
+                "directories": dirs,
+                "files": files
+            }
             
-            return output
+            return PluginResult(
+                data=[data],
+                sources=[],
+                confidence=1.0,
+                degraded=False,
+                plugin="filesystem",
+                metadata={"path": cwd}
+            )
         except Exception as e:
             logger.error(f"[FSPlugin] Error: {e}")
-            return f"Error accessing filesystem: {e}"
+            return PluginResult(
+                data=[{"error": str(e)}],
+                sources=[],
+                confidence=0.0,
+                degraded=True,
+                plugin="filesystem"
+            )

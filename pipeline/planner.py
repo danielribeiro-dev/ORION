@@ -11,7 +11,7 @@ Proibições:
 """
 
 from typing import Any, Dict, List
-from planning.base import BasePlanner
+from core.interfaces import BasePlanner
 
 class Planner(BasePlanner):
     """
@@ -42,7 +42,14 @@ class Planner(BasePlanner):
              return [("fs", {"user_input": user_input})]
              
         if intent_type == "MEMORY":
-            # Pass context to chat for memory-related queries
+            metadata = intent.get("metadata", {})
+            action = metadata.get("action")
+            value = metadata.get("value")
+            
+            if action in ("set_system_name", "set_user_name"):
+                return [("memory", {"user_input": user_input, "action": action, "value": value})]
+            
+            # Default to chat for memory retrieval/queries
             return [("chat", {"user_input": user_input, "context": context})]
 
         return []
