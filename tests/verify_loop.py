@@ -26,7 +26,7 @@ def test_loop():
     with patch.object(ConsoleUI, 'input_user', side_effect=mock_input):
         # We simulate that the first input "hello" is CHAT (Allowed)
         # The second input "exit" triggers break before route
-        with patch('routing.router.Router.route', return_value={"intent": "CHAT", "confidence": 0.99}):
+        with patch('pipeline.router.Router.route', return_value={"intent": "CHAT", "confidence": 0.99}):
             try:
                 main()
             except SystemExit:

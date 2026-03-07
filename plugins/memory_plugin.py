@@ -30,6 +30,9 @@ class MemoryPlugin(BasePlugin):
         elif action == "set_user_name":
             container.profile.set_user_name(value)
             msg = f"Nome do usuário alterado para: {value}"
+        elif action == "set_system_language":
+            container.profile.set_language(value)
+            msg = f"Idioma do sistema alterado para: {value}"
         else:
             msg = "Comando de memória não reconhecido."
             logger.warning(f"[MemoryPlugin] Unknown action: {action}")

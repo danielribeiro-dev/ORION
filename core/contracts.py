@@ -16,6 +16,15 @@ Proibições:
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+from enum import Enum
+
+class ActionLevel(Enum):
+    """
+    Níveis de risco e impacto para ações do sistema.
+    """
+    LEVEL_0 = "conversational"  # Safe: Chat, Help, Explain
+    LEVEL_1 = "consultation"    # Read-only: Web Search, Read Files, Memory Read
+    LEVEL_2 = "modification"    # Impactful: Write Files, Config Change, Code Exec
 
 
 @dataclass
@@ -75,7 +84,7 @@ class RouterResult:
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
         
-        valid_intents = ["CHAT", "WEB", "FILESYSTEM", "MEMORY", "HELP", "UNKNOWN"]
+        valid_intents = ["CHAT", "WEB", "FILESYSTEM", "MEMORY", "HELP", "SYSTEM", "UNKNOWN"]
         if self.intent not in valid_intents:
             raise ValueError(f"Intent must be one of {valid_intents}, got {self.intent}")
 

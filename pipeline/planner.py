@@ -2,16 +2,22 @@
 Planner Module.
 
 Responsabilidade:
-    - Transformar uma intenção (Intent) em um plano de execução detalhado.
+    - Transformar uma intenção (RouterResult) em um plano de execução detalhado.
     - Definir a ordem de chamadas de ferramentas/plugins.
+
+v0.4.0: Aceita RouterResult (contrato formal) além de Dict (duck typing).
+        A extração de action/value para intent MEMORY já vem do LLM via metadata
+        do RouterResult — garantido pelo prompt em prompts.py.
 
 Proibições:
     - Não executa as ações planejadas.
     - Não interage com o usuário.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 from core.interfaces import BasePlanner
+from core.contracts import RouterResult
+
 
 class Planner(BasePlanner):
     """
@@ -19,37 +25,55 @@ class Planner(BasePlanner):
     """
 
     def __init__(self) -> None:
-        """Inicializa o Planner."""
         pass
 
-    def plan(self, intent: Dict[str, Any]) -> List[Any]:
+    def plan(self, intent: Union[RouterResult, Dict[str, Any]]) -> List[Any]:
         """
-        Cria uma lista de passos (Action Plan) a partir da intenção.
+        Cria uma lista de passos (Action Plan) a partir do RouterResult ou Dict.
+
+        v0.4.0: Suporta RouterResult diretamente, com acesso via atributos.
         """
-        intent_type = intent.get("intent")
-        user_input = intent.get("user_input", "") # Router must pass this!
-        
-        # Simple Mapping Strategy (Phase 3)
-        context = intent.get("metadata", {}).get("context", [])
-        
+        # Suporte a RouterResult (v0.4.0) e Dict (retrocompatibilidade)
+        if isinstance(intent, RouterResult):
+            intent_type = intent.intent
+            user_input = intent.user_input
+            context = intent.metadata.get("context", [])
+            metadata = intent.metadata
+        else:
+            # Fallback para Dict (caso algum caminho ainda use dict)
+            intent_type = intent.get("intent")
+            user_input = intent.get("user_input", "")
+            context = intent.get("metadata", {}).get("context", [])
+            metadata = intent.get("metadata", {})
+
+        # --- Mapeamento de Intent → Plano ---
+
         if intent_type in ("CHAT", "HELP"):
             return [("chat", {"user_input": user_input, "context": context})]
-            
+
+        if intent_type == "SYSTEM":
+            return [("system", {"user_input": user_input, "intent": intent_type, "metadata": metadata})]
+
         if intent_type == "WEB":
             return [("web", {"user_input": user_input})]
-            
+
         if intent_type == "FILESYSTEM":
-             return [("fs", {"user_input": user_input})]
-             
+            return [("fs", {"user_input": user_input})]
+
         if intent_type == "MEMORY":
-            metadata = intent.get("metadata", {})
+            # action e value já vêm extraídos do LLM via metadata (ver prompts.py)
             action = metadata.get("action")
             value = metadata.get("value")
-            
-            if action in ("set_system_name", "set_user_name"):
-                return [("memory", {"user_input": user_input, "action": action, "value": value})]
-            
-            # Default to chat for memory retrieval/queries
+
+            if action in ("set_system_name", "set_user_name", "set_system_language"):
+                return [("memory", {
+                    "user_input": user_input,
+                    "action": action,
+                    "value": value
+                })]
+
+            # MEMORY sem action clara → responder via chat
             return [("chat", {"user_input": user_input, "context": context})]
 
-        return []
+        # Intent desconhecido → CHAT por segurança
+        return [("chat", {"user_input": user_input, "context": context})]

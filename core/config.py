@@ -40,7 +40,7 @@ class Settings:
     def __init__(self) -> None:
         self.env: Environment = self._get_env()
         self.app_name: str = "ORION-Core"
-        self.version: str = "0.1.0"
+        self.version: str = "0.4.0"
         self.log_level: str = os.getenv("ORION_LOG_LEVEL", "INFO").upper()
 
         # LLM Configuration

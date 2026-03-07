@@ -1,6 +1,6 @@
 [project]
 name = "orion-core"
-version = "0.1.0"
+version = "0.3.0"
 description = "ORION architectural core system"
 authors = [{ name="Dan" }]
 requires-python = ">=3.10"

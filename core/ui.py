@@ -25,6 +25,16 @@ class ConsoleUI:
     GREY = "\033[90m"
 
     @staticmethod
+    def confirm_action(message: str) -> bool:
+        """Solicita confirmação do usuário (Y/N)."""
+        try:
+            print(f"\n{ConsoleUI.YELLOW}[SECURITY] {message}{ConsoleUI.RESET}")
+            response = input(f"{ConsoleUI.YELLOW}Confirm? (y/N): {ConsoleUI.RESET}").strip().lower()
+            return response == "y"
+        except KeyboardInterrupt:
+            return False
+
+    @staticmethod
     def print_header(system_name: str, version: str, llm_status: str) -> None:
         """Imprime o cabeçalho de inicialização."""
         print(f"{ConsoleUI.CYAN}{ConsoleUI.BOLD}")

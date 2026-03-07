@@ -34,11 +34,12 @@ FILESYSTEM
 - Use for file operations: read, write, list, delete, or modify files and directories.
 
 MEMORY
-- Use for storing/retrieving info or ALTERING CONFIGURATIONS like system/user names.
-- For name changes, identify the action in metadata:
+- Use for storing/retrieving info or ALTERING CONFIGURATIONS like system/user names OR language.
+- For name or language changes, identify the action in metadata:
     - "set_system_name": user wants to change PROJECT/AI name (ex: "seu nome agora é Jarvis").
     - "set_user_name": user wants to change THEIR name (ex: "meu nome é Daniel").
-- Put the new name in the "value" field of metadata.
+    - "set_system_language": user wants to change the LANGUAGE you speak (ex: "fale apenas em inglês a partir de agora", "mude o idioma para espanhol").
+- Put the new name or the requested language in the "value" field of metadata.
 
 Decision Rules
 - Always choose the most specific applicable intent.
@@ -47,7 +48,7 @@ Decision Rules
 
 Output Format (STRICT JSON)
 {
-    "intent": "<HELP | CHAT | WEB | FILESYSTEM | MEMORY>",
+    "intent": "<HELP | SYSTEM | CHAT | WEB | FILESYSTEM | MEMORY>",
     "confidence": <number 0.0-1.0>,
     "reason": "<short justification>",
     "metadata": {
