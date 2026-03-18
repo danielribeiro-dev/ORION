@@ -82,6 +82,14 @@ class Executor(BaseExecutor):
 
             if plugin:
                 try:
+                    # 0.5 Injetar resultados anteriores
+                    import json
+                    if last_result and last_result.data:
+                        prev_str = json.dumps(last_result.data, ensure_ascii=False)
+                        for k, v in params.items():
+                            if isinstance(v, str) and "{{previous_result}}" in v:
+                                params[k] = v.replace("{{previous_result}}", prev_str)
+
                     # 1. Determinar ActionLevel baseado no plugin e ação
                     risk_map = {
                         "chat": ActionLevel.LEVEL_0,
@@ -90,11 +98,16 @@ class Executor(BaseExecutor):
                         "fs": ActionLevel.LEVEL_1
                     }
 
-                    # Ações de memória que alteram configurações são LEVEL_2
+                    # Ações sensíveis ajustam o ActionLevel dinamicamente
                     if plugin_name == "memory" and params.get("action") in [
                         "set_system_name", "set_user_name", "set_system_language"
                     ]:
                         risk_map["memory"] = ActionLevel.LEVEL_2
+                        
+                    if plugin_name == "fs" and params.get("action") in [
+                        "write", "edit", "delete", "move"
+                    ]:
+                        risk_map["fs"] = ActionLevel.LEVEL_2
 
                     level = risk_map.get(plugin_name, ActionLevel.LEVEL_2)
 
@@ -111,9 +124,31 @@ class Executor(BaseExecutor):
                     # 3. Confirmação PEP para ações de alto risco (LEVEL_2)
                     if level == ActionLevel.LEVEL_2:
                         from core.ui import ConsoleUI
-                        confirmed = ConsoleUI.confirm_action(f"Executar Ação de Alto Risco: {plugin_name} {params}?")
+                        
+                        action_msg = f"{plugin_name} {params}"
+                        if plugin_name == "fs":
+                            act = params.get("action", "")
+                            if act == "move":
+                                fnames = params.get("filenames", [])
+                                dest = params.get("destination", "desconhecido")
+                                files_str = ", ".join(fnames) if fnames else params.get('source', '')
+                                action_msg = f"Mover [{files_str}] para a pasta '{dest}'"
+                            elif act == "delete":
+                                fnames = params.get("filenames", [])
+                                if not fnames and "filename" in params:
+                                    fnames = [params["filename"]]
+                                files_str = ", ".join(fnames)
+                                action_msg = f"Deletar [{files_str}] permanentemente"
+                            elif act == "write":
+                                fname = params.get("filename", "")
+                                action_msg = f"Criar/Sobrescrever o arquivo '{fname}'"
+                            elif act == "edit":
+                                fname = params.get("filename", "")
+                                action_msg = f"Editar o arquivo '{fname}'"
+                                
+                        confirmed = ConsoleUI.confirm_action(f"Autoriza a Ação: {action_msg}?")
 
-                        from core.audit import AuditLogger
+                        from governance.audit import AuditLogger
                         AuditLogger.log_action(user, intent_name, level, confirmed, "Confirmação do Usuário")
 
                         if not confirmed:

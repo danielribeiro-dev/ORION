@@ -1,0 +1,82 @@
+# Resumo do Arquivo `docker-compose.txt`
+## Introdução
+O arquivo `docker-compose.txt` contém configurações para um projeto que utiliza o Docker Compose. O projeto inclui três serviços principais: `postgres`, `n8n` e `api`.
+
+## Serviços
+### Postgres
+- **Imagem:** `postgres:15`
+- **Nome do Container:** `mvp_postgres`
+- **Reinicialização:** Sempre
+- **Variáveis de Ambiente:**
+  - `POSTGRES_USER: admin`
+  - `POSTGRES_PASSWORD: admin`
+  - `POSTGRES_DB: mvpdb`
+- **Volumes:** `postgres_data:/var/lib/postgresql/data`
+
+### N8n
+- **Imagem:** `n8nio/n8n`
+- **Nome do Container:** `mvp_n8n`
+- **Reinicialização:** Sempre
+- **Portas:** `5678:5678`
+- **Variáveis de Ambiente:**
+  - `DB_TYPE: postgresdb`
+  - `DB_POSTGRESDB_HOST: postgres`
+  - `DB_POSTGRESDB_DATABASE: mvpdb`
+  - `DB_POSTGRESDB_USER: admin`
+  - `DB_POSTGRESDB_PASSWORD: admin`
+- **Dependências:** `postgres`
+- **Volumes:** `n8n_data:/home/node/.n8n`
+
+### API
+- **Build:** `./api`
+- **Nome do Container:** `mvp_api`
+- **Reinicialização:** Sempre
+- **Portas:** `8000:8000`
+- **Dependências:** `postgres`
+
+## Volumes
+- `postgres_data`
+- `n8n_data`
+
+## Dockerfile
+O Dockerfile é utilizado para construir a imagem da API. Ele:
+- Utiliza a imagem `python:3.11` como base.
+- Define o diretório de trabalho como `/app`.
+- Copia o arquivo `requirements.txt` para o diretório de trabalho e instala as dependências com `pip`.
+- Copia os arquivos do projeto para o diretório de trabalho.
+- Define o comando para executar a API com `uvicorn`.
+
+## main.py
+O arquivo `main.py` é o ponto de entrada da API. Ele:
+- Importa as bibliotecas necessárias (`fastapi`, `pydantic`, `psycopg2`).
+- Define a aplicação FastAPI.
+- Configura as variáveis de ambiente para conexão com o banco de dados Postgres.
+- Define uma função para obter uma conexão com o banco de dados.
+- Define uma rota para a página inicial que retorna uma mensagem de boas-vindas.
+- Define um modelo `Lead` com os campos `nome`, `telefone`, `mensagem` e `area_juridica`.
+- Define uma função `calcular_score` que calcula um score com base na mensagem e área jurídica.
+- Define uma rota para receber leads que:
+  - Verifica se o telefone já existe no banco de dados.
+  - Se existir, atualiza o resumo, área e score. Se não, cria um novo lead.
+  - Retorna o status da ação (criado ou atualizado) e o ID do lead.
+
+## Resultados da Pesquisa sobre Docker Compose
+- **Docker Compose**: É uma ferramenta para definir e executar aplicações multi-contêineres no Docker.
+- **Definição**: Permite que os desenvolvedores definam e executem aplicações multi-contêineres de forma simples e eficiente.
+- **Funcionalidades**:
+  - Permite a definição de serviços e dependências entre contêineres.
+  - Fornece uma forma de gerenciar e orquestrar contêineres em um ambiente de desenvolvimento ou produção.
+  - Suporta a criação de redes e volumes para os contêineres.
+- **Comandos**:
+  - `docker compose up`: Inicia os contêineres definidos no arquivo de composição.
+  - `docker compose down`: Para os contêineres e remove os volumes e redes criados.
+  - `docker compose ps`: Lista os contêineres em execução.
+- **Arquivo de Composição**: É um arquivo YAML que define os serviços, dependências e configurações para a aplicação.
+- **Exemplos de Uso**:
+  - Desenvolvimento de aplicações web com múltiplos serviços (front-end, back-end, banco de dados).
+  - Criação de ambientes de teste e desenvolvimento para aplicações complexas.
+  - Orquestração de contêineres em um ambiente de produção.
+- **Recursos Adicionais**:
+  - Documentação oficial do Docker Compose: https://docs.docker.com/compose/
+  - Exemplos de arquivos de composição: https://github.com/docker/compose/tree/master/examples
+  - Comunidade e fóruns de discussão: https://forums.docker.com/c/docker-compose

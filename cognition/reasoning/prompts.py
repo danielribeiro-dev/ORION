@@ -33,6 +33,10 @@ WEB
 FILESYSTEM
 - Use for file operations: read, write, list, delete, or modify files and directories.
 
+AUTOMATION
+- Use when the user requests a multi-step operation involving MORE THAN ONE distinct capability at once (ex: "pesquise na web o que é python e crie um arquivo com o resumo").
+- When using AUTOMATION, describe the steps briefly in the reason field.
+
 MEMORY
 - Use for storing/retrieving info or ALTERING CONFIGURATIONS like system/user names OR language.
 - For name or language changes, identify the action in metadata:
@@ -48,7 +52,7 @@ Decision Rules
 
 Output Format (STRICT JSON)
 {
-    "intent": "<HELP | SYSTEM | CHAT | WEB | FILESYSTEM | MEMORY>",
+    "intent": "<HELP | SYSTEM | CHAT | WEB | FILESYSTEM | AUTOMATION | MEMORY>",
     "confidence": <number 0.0-1.0>,
     "reason": "<short justification>",
     "metadata": {

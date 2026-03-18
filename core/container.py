@@ -5,11 +5,12 @@ Responsabilidade:
     - Centralizar a criação e injeção de dependências.
     - Gerenciar singletons.
     - Prover acesso aos componentes principais.
-    - Expor current_user carregado do perfil persistente (v0.4.0).
+    - Expor current_user carregado do perfil persistente.
 
-v0.4.0:
-    - Adicionada propriedade current_user (sessão persistente sem login).
-    - AuthService instanciado aqui como singleton (removido do Executor).
+v0.4.0 — Reestruturação:
+    - pipeline.* → cognition.*
+    - core.auth / core.audit → governance.*
+    - plugins.*_plugin → plugins.<sub>.*
 """
 
 from typing import Optional
@@ -17,20 +18,30 @@ from typing import Optional
 from core.config import settings, Settings
 from core.logger import logger
 from core.runtime import Runtime
-from core.auth import AuthService, User
-from pipeline.router import Router
-from pipeline.planner import Planner
-from pipeline.executor import Executor
-from pipeline.answer import AnswerPipeline
-from pipeline.policy import GovernanceEngine
+
+# Governance (movidos de core/ e pipeline/)
+from governance.auth import AuthService, User
+from governance.policy import GovernanceEngine
+
+# Cognition (movidos de pipeline/)
+from cognition.router import Router
+from cognition.planner import Planner
+from cognition.executor import Executor
+from cognition.answer import AnswerPipeline
+
+# LLM
 from llm.service import LLMService
-from memory.profile import ProfileMemory
-from memory.history import HistoryMemory
+
+# Memory
+from memory.profile import ProfileMemory     # via memory/profile/__init__.py
+from memory.history import HistoryMemory     # via memory/history/__init__.py
+from memory.semantic import SemanticMemory
+from memory.extractor import MemoryExtractor
 
 
 class Container:
     """
-    Container de injeção de dependências.
+    Container de injeção de dependências — Singleton.
     """
 
     _instance: Optional['Container'] = None
@@ -46,31 +57,41 @@ class Container:
         )
         self.history = HistoryMemory()
 
-        # Auth (singleton aqui, não instanciado por quem consome)
+        # Auth (singleton — não instanciar fora do Container)
         self.auth_service = AuthService()
 
-        # Core Services
+        # Governance
         self.capability_guard = GovernanceEngine()
+
+        # LLM
         self.llm_service = LLMService()
 
-        # Plugins
-        from plugins.chat_plugin import ChatPlugin
-        from plugins.web_plugin import WebPlugin
-        from plugins.fs_plugin import FilesystemPlugin
-        from plugins.memory_plugin import MemoryPlugin
+        # Semantic Long-Term Memory
+        self.semantic_memory = SemanticMemory()
+        self.memory_extractor = MemoryExtractor()
+
+        # Plugins (carregados dos subpacotes)
+        from plugins.chat import ChatPlugin
+        from plugins.web import WebPlugin
+        from plugins.filesystem import FilesystemPlugin
+        from plugins.memory import MemoryPlugin
+        from plugins.memory_search_plugin import MemorySearchPlugin
 
         self.plugins = {
             "chat": ChatPlugin(),
             "web": WebPlugin(),
             "fs": FilesystemPlugin(),
-            "memory": MemoryPlugin()
+            "memory": MemoryPlugin(),
+            "memory_search": MemorySearchPlugin(self.semantic_memory)
         }
 
-        # Pipeline Components
+        # Cognition Pipeline
         self.router = Router()
         self.planner = Planner()
         self.executor = Executor()
         self.answer_pipeline = AnswerPipeline()
+
+        # Runtime
         self.runtime = Runtime()
 
     @classmethod
@@ -83,27 +104,21 @@ class Container:
     def current_user(self) -> Optional[User]:
         """
         Retorna o usuário da sessão atual, carregado do profile.json.
-
         Não requer login: o usuário é persistido entre sessões.
-        Se não existir no AuthService (ex: usuário customizado), cria
-        um objeto User temporário a partir dos dados do perfil.
         """
         session_data = self.profile.get_current_user()
         username = session_data.get("username", "admin")
 
-        # Tentar buscar do AuthService (usuário real cadastrado)
+        # Tentar buscar usuário cadastrado no AuthService
         user = self.auth_service.get_user(username)
 
         if user:
             return user
 
-        # Fallback: criar objeto User com dados do perfil (sem hash de senha)
-        # Permite que nomes customizados (ex: "daniel") funcionem mesmo sem
-        # estar cadastrados formalmente no users.json
-        from core.auth import User as UserModel
-        return UserModel(
+        # Fallback: criar User temporário a partir dos dados do perfil
+        return User(
             username=username,
-            password_hash="",       # Sessão persistida, sem necessidade de senha
+            password_hash="",
             role=session_data.get("role", "admin"),
             active=True
         )

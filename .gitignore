@@ -2,20 +2,33 @@
 .venv/
 __pycache__/
 *.pyc
+*.egg-info/
+.pytest_cache/
 
 # Configurações Sensíveis
 .env
+.env.*
+!.env.example
 
 # Logs e Dados de Execução
+*.log
 orion.log
+audit.log
 memory/*.jsonl
 memory/*.json
+memory/chroma_db/
+users.json
 
 # Documentação
 *.md
 !README.md
+!docs/**/*.md
 
 # Ferramentas de IDE
 .DS_Store
 .idea/
 .vscode/
+
+# Build
+dist/
+build/

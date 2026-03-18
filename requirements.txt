@@ -2,3 +2,5 @@ requests
 duckduckgo-search
 python-dotenv
 bcrypt
+chromadb>=0.5.0
+sentence-transformers>=3.0.0

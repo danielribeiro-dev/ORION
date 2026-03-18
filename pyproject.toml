@@ -1,9 +1,16 @@
 [project]
 name = "orion-core"
-version = "0.3.0"
+version = "0.4.0"
 description = "ORION architectural core system"
 authors = [{ name="Dan" }]
 requires-python = ">=3.10"
 
 [project.scripts]
-orion = "orion.cli:main"
+orion = "cli:main"
+
+[tool.setuptools]
+packages = [
+    "cognition", "governance", "core", "plugins", "memory",
+    "llm", "config", "devices", "devtools", "eventbus", "automation"
+]
+py-modules = ["cli", "main"]

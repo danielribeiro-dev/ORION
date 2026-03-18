@@ -66,6 +66,8 @@ class AnswerPipeline(BaseAnswerPipeline):
             return self._format_system_result(result)
         elif result.plugin == "fs":
             return self._format_filesystem_result(result)
+        elif result.plugin == "memory_search":
+            return self._format_memory_search(result)
 
         # Fallback genérico
         return f"[{result.plugin.upper()}] Resultado: {result.data}"
@@ -90,33 +92,79 @@ class AnswerPipeline(BaseAnswerPipeline):
 
     def _format_filesystem_result(self, result: PluginResult) -> str:
         """
-        Formata resultado do FilesystemPlugin de forma legível.
-        v0.4.0: Adicionado para corrigir BUG-08.
+        Formata resultado do FilesystemPlugin de forma legível baseado na ação (BUG-08 e Visualizador Fantasma).
         """
         data = result.data[0] if result.data else {}
-        cwd = data.get("cwd", "?")
-        directories = data.get("directories", [])
-        files = data.get("files", [])
+        action = result.metadata.get("action", "list") if result.metadata else "list"
+        
+        lines = []
+        if action == "list":
+            cwd = data.get("cwd", "?")
+            directories = data.get("directories", [])
+            files = data.get("files", [])
 
-        lines = [f"📁 **Diretório Atual:** `{cwd}`\n"]
-
-        if directories:
-            lines.append("**Pastas:**")
-            for d in sorted(directories):
-                lines.append(f"  📂 {d}/")
-            lines.append("")
-
-        if files:
-            lines.append("**Arquivos:**")
-            for f in sorted(files):
-                lines.append(f"  📄 {f}")
-            lines.append("")
-
-        if not directories and not files:
-            lines.append("*(Diretório vazio ou todos os itens estão protegidos)*")
+            lines.append(f"📁 **Diretório Atual:** `{cwd}`\n")
+            if directories:
+                lines.append("**Pastas:**")
+                for d in sorted(directories):
+                    lines.append(f"  📂 {d}/")
+                lines.append("")
+            if files:
+                lines.append("**Arquivos:**")
+                for f in sorted(files):
+                    lines.append(f"  📄 {f}")
+                lines.append("")
+            if not directories and not files:
+                lines.append("*(Diretório vazio ou todos os itens estão protegidos)*")
+                
+        elif action == "read":
+            filename = data.get("filename", "")
+            content = data.get("content", "")
+            lines.append(f"📄 **Conteúdo de {filename}:**\n")
+            lines.append(f"```text\n{content}\n```")
+            
+        elif action in ["write", "edit", "move", "delete"]:
+            msgs = []
+            if data.get("status") == "created_or_updated":
+                msgs.append(f"✅ Arquivo '{data.get('filename')}' criado/atualizado com sucesso.")
+            if data.get("status") == "edited":
+                 msgs.append(f"✅ Arquivo '{data.get('filename')}' editado com sucesso.")
+            if data.get("moved"):
+                 msgs.append(f"✅ {len(data.get('moved'))} arquivo(s) movido(s) para '{data.get('destination')}'.")
+            if data.get("deleted"):
+                 msgs.append(f"✅ {len(data.get('deleted'))} arquivo(s) deletado(s) permanentemente.")
+            
+            lines.extend(msgs if msgs else ["✅ Operação de arquivos concluída com segurança."])
 
         footer = self._build_footer(result)
+        lines.append("")
         lines.append(footer)
+        return "\n".join(lines)
+
+    def _format_memory_search(self, result: PluginResult) -> str:
+        """Formata resultados organizados do resgate vetorial no memory_search."""
+        if not result.data:
+            return "✅ Busca concluída. Nenhuma informação relevante pôde ser retornada."
+            
+        lines = ["🧠 **Contextos e Memórias Relevantes Sobre Este Tópico:**\n"]
+        
+        # O plugin envia o dictionary no array de dicts mas, pra memory_search pode enviar um array normal do primeiro item de não encontra.
+        if "content" in result.data[0] and len(result.data) == 1 and not "type" in result.data[0]:
+             return f"🧠 {result.data[0].get('content')}"
+             
+        for idx, item in enumerate(result.data, 1):
+             tipo = item.get("type", "desconhecido")
+             if tipo == "episodic":
+                  lines.append(f"{idx}. 📅 (**Fragmento Temporal** · {item.get('date', '')})")
+                  lines.append(f"   \"{item.get('content', '')}\"\n")
+             elif tipo == "semantic":
+                  lines.append(f"{idx}. 📌 (**Fato Consolidado** · ref: *{item.get('category')}*)")
+                  lines.append(f"   \"{item.get('content', '')}\"\n")
+             elif tipo == "procedural":
+                  lines.append(f"{idx}. 🏗️ (**Padrão Operacional**) - Ativação: *{item.get('trigger')}*")
+                  lines.append(f"   Sequência esperada: {item.get('sequence', '[]')}\n")
+                  
+        lines.append(self._build_footer(result))
         return "\n".join(lines)
 
     def _format_web_result(self, result: PluginResult) -> str:

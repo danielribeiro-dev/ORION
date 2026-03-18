@@ -84,7 +84,7 @@ class RouterResult:
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
         
-        valid_intents = ["CHAT", "WEB", "FILESYSTEM", "MEMORY", "HELP", "SYSTEM", "UNKNOWN"]
+        valid_intents = ["CHAT", "WEB", "FILESYSTEM", "AUTOMATION", "MEMORY", "HELP", "SYSTEM", "UNKNOWN"]
         if self.intent not in valid_intents:
             raise ValueError(f"Intent must be one of {valid_intents}, got {self.intent}")
 

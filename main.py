@@ -19,6 +19,9 @@ Regras:
 """
 
 import sys
+import threading
+from datetime import datetime
+from uuid import uuid4
 from core.container import Container
 from core.ui import ConsoleUI
 
@@ -28,6 +31,8 @@ def main() -> None:
     container = Container.get_instance()
     settings = container.settings
     logger = container.logger
+    
+    session_id = str(uuid4())
 
     # 2. Iniciar Runtime
     container.runtime.start()
@@ -58,7 +63,8 @@ def main() -> None:
 
                 # A. Classificar Intent (retorna RouterResult em v0.4.0)
                 recent_history = container.history.get_recent(n=5)
-                router_result = container.router.route(user_input, context=recent_history)
+                memory_context = container.semantic_memory.get_context_for_prompt(user_input)
+                router_result = container.router.route(user_input, context=recent_history, memory_context=memory_context)
 
                 # B. Planejar (RouterResult → [(plugin, params), ...])
                 plan = container.planner.plan(router_result)
@@ -81,6 +87,22 @@ def main() -> None:
                 # F. Exibir ao Usuário
                 system_name = container.profile.get_system_name()
                 ConsoleUI.print_assistant(system_name, final_response or "(Nenhuma resposta gerada)")
+                
+                # G. Extração Assíncrona e Salvamento Episódico na Memória Semântica longa
+                threading.Thread(
+                    target=container.memory_extractor.extract_and_store,
+                    args=(user_input, final_response, container.semantic_memory, container.llm_service),
+                    daemon=True
+                ).start()
+                
+                container.semantic_memory.store_episode(
+                    text=f"Usuário: {user_input}\nAssistente: {final_response}",
+                    metadata={
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "session_id": session_id,
+                        "source": "conversation"
+                    }
+                )
 
             except KeyboardInterrupt:
                 print()
